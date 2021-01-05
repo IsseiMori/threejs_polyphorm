@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.2.0.min.js"
+            integrity="sha256-JAW99MJVpJBGcbzEuXk4Az05s/XyDdBomFqNlM3ic+I="
+            crossorigin="anonymous"></script>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.js" ></script>
+
+    <script>
+    // ドキュメントロード後の処理
+    $(function(){
+        $mainFrame = $("#main-frame");
+
+        // シーン、カメラ、レンダラを生成
+        var scene    = new THREE.Scene();
+        var camera   = new THREE.PerspectiveCamera( 75, $mainFrame.width()  / $mainFrame.height(), 0.1, 1000 );
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize( $mainFrame.width(), $mainFrame.height() );
+        camera.position.z = 5;
+                camera.position.y = 1;
+
+        // 自動生成されたcanvas要素をdivへ追加する。
+        $mainFrame.append(  renderer.domElement )
+
+        // ここらへんは好きなオブジェクトをシーンに突っ込んじゃってください。
+        var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+        var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+        var cube = new THREE.Mesh( geometry, material );
+        scene.add( cube );
+
+        // コールバック関数 render をrequestAnimationFrameに渡して、
+        // 繰り返し呼び出してもらう。
+        var render = function () {
+            window.requestAnimationFrame( render );
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        };
+        render();
+    });
+    </script>
+</head>
+
+<body>
+    <h2>Three.js TEST</h2>
+    <div id="main-frame" style="width:600px; height:400px; background-color:lightskyblue"></div>
+</body>
+</html>
