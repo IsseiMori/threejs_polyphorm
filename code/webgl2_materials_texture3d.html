@@ -6,6 +6,8 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
+	<!-- smooth animation package -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/16.3.5/Tween.min.js"></script>
 </head>
 
 <body>
@@ -35,7 +37,13 @@
 			controls,
 			material,
 			volconfig,
-			cmtextures;
+			cmtextures,
+			cube,
+			raycaster,
+			mouse,
+			animation_id;
+
+		let is_animating = false;
 
 		init();
 
@@ -63,6 +71,19 @@
 			controls.minZoom = 0.5;
 			controls.maxZoom = 4;
 			controls.update();
+
+			// Create clickable cube
+			cube = new THREE.Mesh(                                          
+				new THREE.CubeGeometry(50,50,50),                          
+				new THREE.MeshPhongMaterial({                                      
+				       color: 0x990000 //球の色
+				}));
+			scene.add(cube);
+			cube.callback = objectClickHandler;
+
+
+			raycaster = new THREE.Raycaster();
+		    mouse = new THREE.Vector2();
 
 			// scene.add( new AxesHelper( 128 ) );
 
@@ -125,9 +146,13 @@
 
 				render();
 
+				// Start tween animation when model is loaded
+				// tweenCamera(camera, [0,0,-100], 1000);
+
 			} );
 
 			window.addEventListener( 'resize', onWindowResize, false );
+			renderer.domElement.addEventListener("click", onClick, true);
 
 		}
 
@@ -159,11 +184,72 @@
 
 		}
 
+		function tweenCamera(camera, position, duration) {        
+	        var tween = new TWEEN.Tween(camera.position).to({
+	          x: position[0],
+	          y: position[1],
+	          z: position[2]
+	        }, duration)
+	        .easing(TWEEN.Easing.Quadratic.InOut)
+	        .onComplete(handleComplete)
+	        .start();
+	    }
+
+		function objectClickHandler() {
+			console.log("cube obj click handler")
+			is_animating = true
+		    tweenCamera(cube, [0,0,-100], 1000);
+		    console.log(is_animating);
+		    render();
+		}
+		
+		function onClick(event) {
+	    	console.log("click")
+	        event.preventDefault();
+	 
+	        mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+	        mouse.y =  - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+	 
+	        raycaster.setFromCamera(mouse, camera);
+	 
+	        let meshObjects = [cube]; // three.js objects with click handlers we are interested in
+	 
+	        var intersects = raycaster.intersectObjects(meshObjects);
+
+	 
+	        if (intersects.length != 0) {
+	            intersects[0].object.callback();
+	            console.log("clicked cube")
+	        }
+	 
+	    }
+
+	    function handleComplete() {
+	    	console.log('done!')
+			is_animating = false
+	    }
+
 		function render() {
 
+			console.log(is_animating);
+			if (is_animating == true) {
+				console.log("activate animation")
+				// start the loop
+				// renderer.setAnimationLoop(() => {
+				// 	renderer.render(scene, camera);
+				// });
+				animation_id = requestAnimationFrame( render );
+			}
+			else {
+				//renderer.setAnimationLoop(null);
+				cancelAnimationFrame( animation_id );
+			}
+
+			TWEEN.update();
 			renderer.render( scene, camera );
 
 		}
+		
 
 	</script>
 
