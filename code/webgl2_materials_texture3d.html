@@ -75,7 +75,7 @@
 			// Create clickable cube
 			cube = new THREE.Mesh(                                          
 				new THREE.CubeGeometry(50,50,50),                          
-				new THREE.MeshPhongMaterial({                                      
+				new THREE.MeshBasicMaterial({                                      
 				       color: 0x990000 //球の色
 				}));
 			scene.add(cube);
@@ -184,13 +184,16 @@
 
 		}
 
-		function tweenCamera(camera, position, duration) {        
-	        var tween = new TWEEN.Tween(camera.position).to({
-	          x: position[0],
-	          y: position[1],
-	          z: position[2]
+		function tweenObject(object, vec3, duration) {        
+	        new TWEEN.Tween(object).to({
+	          x: vec3[0],
+	          y: vec3[1],
+	          z: vec3[2]
 	        }, duration)
 	        .easing(TWEEN.Easing.Quadratic.InOut)
+	        .onUpdate(function(){
+                    controls.update();
+                })
 	        .onComplete(handleComplete)
 	        .start();
 	    }
@@ -198,13 +201,15 @@
 		function objectClickHandler() {
 			console.log("cube obj click handler")
 			is_animating = true
-		    tweenCamera(cube, [0,0,-100], 1000);
-		    console.log(is_animating);
+			controls.enabled = false;
+			controls.removeEventListener( 'change', render );
+			console.log("controls disabled")
+		    tweenObject(camera.position, [-2.9860586,0.4069273,1.193594], 1000);
+		    tweenObject(controls.target, [355, 21, 17], 1000);
 		    render();
 		}
 		
 		function onClick(event) {
-	    	console.log("click")
 	        event.preventDefault();
 	 
 	        mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
@@ -219,35 +224,29 @@
 	 
 	        if (intersects.length != 0) {
 	            intersects[0].object.callback();
-	            console.log("clicked cube")
 	        }
 	 
 	    }
 
+	    // callback function for tween animation
 	    function handleComplete() {
-	    	console.log('done!')
 			is_animating = false
+			controls.enabled = true;
+			controls.addEventListener( 'change', render );
+			console.log("controls enabled")
 	    }
 
 		function render() {
 
-			console.log(is_animating);
 			if (is_animating == true) {
-				console.log("activate animation")
-				// start the loop
-				// renderer.setAnimationLoop(() => {
-				// 	renderer.render(scene, camera);
-				// });
 				animation_id = requestAnimationFrame( render );
 			}
 			else {
-				//renderer.setAnimationLoop(null);
 				cancelAnimationFrame( animation_id );
 			}
 
 			TWEEN.update();
 			renderer.render( scene, camera );
-
 		}
 		
 
