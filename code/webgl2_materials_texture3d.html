@@ -41,15 +41,22 @@
 			cube,
 			raycaster,
 			mouse,
-			animation_id;
+			animation_id,
+			camera_HUD,
+			scene_HUD;
 
 		let is_animating = false;
+		let val_zoom = 1;
 
 		init();
 
 		function init() {
 
 			scene = new THREE.Scene();
+			scene_HUD = new THREE.Scene();
+
+			// background color
+			scene.background = new THREE.Color( 0x440054 );
 
 			// Create renderer
 			renderer = new THREE.WebGLRenderer();
@@ -61,8 +68,8 @@
 			const h = 512; // frustum height
 			const aspect = window.innerWidth / window.innerHeight;
 			camera = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 1000 );
-			camera.position.set( 0, 0, 128 );
-			camera.up.set( 0, 0, -1 ); // In our data, z is up
+			camera.position.set( 0, 0, 0 );
+			camera.up.set( -1, 0, 0 ); // In our data, z is up
 
 			// Create controls
 			controls = new OrbitControls( camera, renderer.domElement );
@@ -70,16 +77,28 @@
 			controls.target.set(155, 271, 147 );
 			controls.minZoom = 0.5;
 			controls.maxZoom = 4;
-			controls.update();
+			//controls.update();
 
 			// Create clickable cube
 			cube = new THREE.Mesh(                                          
-				new THREE.CubeGeometry(50,50,50),                          
+				new THREE.CubeGeometry(50,50,50).translate(100,30,50),                          
 				new THREE.MeshBasicMaterial({                                      
 				       color: 0x990000 //球の色
 				}));
+			//cube.translate(0,0,0);
 			scene.add(cube);
 			cube.callback = objectClickHandler;
+
+			camera_HUD = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 1000 );
+			renderer.autoClear = false; // to allow overlay
+
+			var map = new THREE.TextureLoader().load( "textures/cc6b2753.png" );
+			var map_material = new THREE.SpriteMaterial( { map: map, color: 0xffffff } );
+			map_material.transparent = true;
+			var sprite = new THREE.Sprite( map_material );
+			sprite.scale.set(500,300,10);
+			scene.add( sprite );
+
 
 
 			raycaster = new THREE.Raycaster();
@@ -138,10 +157,12 @@
 				} );
 
 				// THREE.Mesh
-				const geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
-				geometry.translate( volume.xLength / 2 - 0.5, volume.yLength / 2 - 0.5, volume.zLength / 2 - 0.5 );
-
+				const geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength);
+				// geometry.translate( volume.xLength / 2 - 0.5, volume.yLength / 2 - 0.5, volume.zLength / 2 - 0.5 );
+				geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2);
+				// geometry.rotateY( 90 );
 				const mesh = new THREE.Mesh( geometry, material );
+
 				scene.add( mesh );
 
 				render();
@@ -184,7 +205,7 @@
 
 		}
 
-		function tweenObject(object, vec3, duration) {        
+		function tweenObjectVec3(object, vec3, duration) {        
 	        new TWEEN.Tween(object).to({
 	          x: vec3[0],
 	          y: vec3[1],
@@ -198,14 +219,25 @@
 	        .start();
 	    }
 
+	    function tweenObject(object, val1, duration) {        
+	        new TWEEN.Tween(object).to({
+	          zoom: val1
+	      	}, duration)
+	        .easing(TWEEN.Easing.Quadratic.InOut)
+	        .onUpdate(function(){
+                    //camera.zoom = val_zoom;
+                    camera.updateProjectionMatrix();
+                })
+	        .onComplete(handleComplete)
+	        .start();
+	    }
+
 		function objectClickHandler() {
-			console.log("cube obj click handler")
 			is_animating = true
 			controls.enabled = false;
 			controls.removeEventListener( 'change', render );
-			console.log("controls disabled")
-		    tweenObject(camera.position, [-2.9860586,0.4069273,1.193594], 1000);
-		    tweenObject(controls.target, [355, 21, 17], 1000);
+		    tweenObjectVec3(camera.position, [135.5,525.7,327.5], 2000);
+		    tweenObject(camera, 1.5, 2000);
 		    render();
 		}
 		
@@ -233,10 +265,12 @@
 			is_animating = false
 			controls.enabled = true;
 			controls.addEventListener( 'change', render );
-			console.log("controls enabled")
 	    }
 
 		function render() {
+
+			//console.log(camera.position)
+			console.log(val_zoom)
 
 			if (is_animating == true) {
 				animation_id = requestAnimationFrame( render );
@@ -247,6 +281,11 @@
 
 			TWEEN.update();
 			renderer.render( scene, camera );
+
+			renderer.clear();
+			renderer.render( scene, camera );
+			renderer.clearDepth();
+			renderer.render( scene_HUD, camera_HUD );
 		}
 		
 
