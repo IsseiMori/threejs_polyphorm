@@ -39,24 +39,29 @@
 			volconfig,
 			cmtextures,
 			cube,
+			cube2,
 			raycaster,
 			mouse,
-			animation_id,
-			camera_HUD,
-			scene_HUD;
+			animation_id;
+			//camera_HUD,
+			//scene_HUD;
 
 		let is_animating = false;
 		let val_zoom = 1;
+		let image_on = false;
+		let image_id = 0;
+		let image_objects = [];
 
 		init();
 
 		function init() {
 
 			scene = new THREE.Scene();
-			scene_HUD = new THREE.Scene();
+			//scene_HUD = new THREE.Scene();
 
 			// background color
-			scene.background = new THREE.Color( 0x440054 );
+			// scene.background = new THREE.Color( 0x440054 );
+			scene.background = new THREE.Color( 0x000000 );
 
 			// Create renderer
 			renderer = new THREE.WebGLRenderer();
@@ -70,39 +75,72 @@
 			camera = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 1000 );
 			camera.position.set( 0, 0, 0 );
 			camera.up.set( -1, 0, 0 ); // In our data, z is up
+			scene.add( camera );
 
 			// Create controls
 			controls = new OrbitControls( camera, renderer.domElement );
 			controls.addEventListener( 'change', render );
 			controls.target.set(155, 271, 147 );
-			controls.minZoom = 0.5;
+			controls.minZoom = 0.1;
 			controls.maxZoom = 4;
-			//controls.update();
+			
 
 			// Create clickable cube
 			cube = new THREE.Mesh(                                          
-				new THREE.CubeGeometry(50,50,50).translate(100,30,50),                          
+				new THREE.CubeGeometry(20,20,20).translate(150,300,300),                          
 				new THREE.MeshBasicMaterial({                                      
 				       color: 0x990000 //球の色
 				}));
-			//cube.translate(0,0,0);
 			scene.add(cube);
 			cube.callback = objectClickHandler;
 
-			camera_HUD = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 1000 );
-			renderer.autoClear = false; // to allow overlay
+			// Create clickable cube
+			cube2 = new THREE.Mesh(                                          
+				new THREE.CubeGeometry(20,20,20).translate(150,500,300),                          
+				new THREE.MeshBasicMaterial({                                      
+				       color: 0x999900 //球の色
+				}));
+			scene.add(cube2);
+			cube2.callback = objectClickHandler2;
 
-			var map = new THREE.TextureLoader().load( "textures/cc6b2753.png" );
-			var map_material = new THREE.SpriteMaterial( { map: map, color: 0xffffff } );
-			map_material.transparent = true;
-			var sprite = new THREE.Sprite( map_material );
-			sprite.scale.set(500,300,10);
-			scene.add( sprite );
+			//camera_HUD = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 1000 );
+			//renderer.autoClear = false; // to allow overlay
+
+			new THREE.TextureLoader().load( "textures/frame0.png", function(map) {
+				var map_material = new THREE.SpriteMaterial( { map: map, color: 0xffffff} );
+				map_material.transparent = true;
+				//map_material.opacity = 0.5;
+				var sprite = new THREE.Sprite( map_material );
+				const slime_image_width = 650;
+				const slime_image_height = slime_image_width / map.image.width * map.image.height;
+				sprite.scale.set(slime_image_width, slime_image_height,1);
+				sprite.position.z = -10;
+	        	sprite.renderOrder = 9999;
+				//camera.add( sprite );
+				image_objects.push(sprite);
+			} );
+
+			new THREE.TextureLoader().load( "textures/frame1.png", function(map) {
+				var map_material = new THREE.SpriteMaterial( { map: map, color: 0xffffff} );
+				map_material.transparent = true;
+				//map_material.opacity = 0.5;
+				var sprite = new THREE.Sprite( map_material );
+				const slime_image_width = 650;
+				const slime_image_height = slime_image_width / map.image.width * map.image.height;
+				sprite.scale.set(slime_image_width, slime_image_height,1);
+				sprite.position.z = -10;
+	        	sprite.renderOrder = 9999;
+				//camera.add( sprite );
+				image_objects.push(sprite);
+			} );
+			
 
 
 
 			raycaster = new THREE.Raycaster();
 		    mouse = new THREE.Vector2();
+
+		    controls.update();
 
 			// scene.add( new AxesHelper( 128 ) );
 
@@ -110,7 +148,7 @@
 			// let dirLight = new DirectionalLight( 0xffffff );
 
 			// The gui for interaction
-			volconfig = { clim1: 0, clim2: 0.25, renderstyle: 'mip', isothreshold: 0.15, colormap: 'viridis' };
+			volconfig = { clim1: 0, clim2: 0.25, renderstyle: 'mip', isothreshold: 0.15, colormap: 'gray' };
 			const gui = new GUI();
 			gui.add( volconfig, 'clim1', 0, 1, 0.01 ).onChange( updateUniforms );
 			gui.add( volconfig, 'clim2', 0, 1, 0.01 ).onChange( updateUniforms );
@@ -174,6 +212,7 @@
 
 			window.addEventListener( 'resize', onWindowResize, false );
 			renderer.domElement.addEventListener("click", onClick, true);
+			renderer.domElement.addEventListener("pointerdown", onDocumentMouseDown, true);
 
 		}
 
@@ -189,6 +228,8 @@
 		}
 
 		function onWindowResize() {
+
+			console.log(window.innerWidth);
 
 			renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -217,6 +258,7 @@
                 })
 	        .onComplete(handleComplete)
 	        .start();
+	        console.log("aaa");
 	    }
 
 	    function tweenObject(object, val1, duration) {        
@@ -236,8 +278,22 @@
 			is_animating = true
 			controls.enabled = false;
 			controls.removeEventListener( 'change', render );
-		    tweenObjectVec3(camera.position, [135.5,525.7,327.5], 2000);
+		    tweenObjectVec3(camera.position, [131,295,490], 2000);
+		    //tweenObjectVec3(camera.position, [135.5,525.7,327.5], 2000);
 		    tweenObject(camera, 1.5, 2000);
+		    image_id = 0;
+		    render();
+		}
+
+		function objectClickHandler2() {
+			console.log("aaaaaaa");
+			is_animating = true
+			controls.enabled = false;
+			controls.removeEventListener( 'change', render );
+		    tweenObjectVec3(camera.position, [209,453,434], 2000);
+		    //tweenObjectVec3(camera.position, [135.5,525.7,327.5], 2000);
+		    tweenObject(camera, 1.5, 2000);
+		    image_id = 1;
 		    render();
 		}
 		
@@ -249,7 +305,7 @@
 	 
 	        raycaster.setFromCamera(mouse, camera);
 	 
-	        let meshObjects = [cube]; // three.js objects with click handlers we are interested in
+	        let meshObjects = [cube, cube2]; // three.js objects with click handlers we are interested in
 	 
 	        var intersects = raycaster.intersectObjects(meshObjects);
 
@@ -260,17 +316,24 @@
 	 
 	    }
 
+	    function onDocumentMouseDown(event) {
+	        if (image_on) camera.clear();	 
+	    }
+
 	    // callback function for tween animation
 	    function handleComplete() {
 			is_animating = false
 			controls.enabled = true;
 			controls.addEventListener( 'change', render );
+			if (image_id == 0) 
+				camera.add(image_objects[0]);
+			else camera.add(image_objects[1]);
+			image_on = true;
 	    }
 
 		function render() {
 
 			//console.log(camera.position)
-			console.log(val_zoom)
 
 			if (is_animating == true) {
 				animation_id = requestAnimationFrame( render );
@@ -282,10 +345,10 @@
 			TWEEN.update();
 			renderer.render( scene, camera );
 
-			renderer.clear();
-			renderer.render( scene, camera );
-			renderer.clearDepth();
-			renderer.render( scene_HUD, camera_HUD );
+			// renderer.clear();
+			// renderer.render( scene, camera );
+			// renderer.clearDepth();
+			// renderer.render( scene_HUD, camera_HUD );
 		}
 		
 
