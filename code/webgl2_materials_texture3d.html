@@ -73,16 +73,22 @@
 			const h = 512; // frustum height
 			const aspect = window.innerWidth / window.innerHeight;
 			camera = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 1000 );
-			camera.position.set( 0, 0, 0 );
+			// camera.position.set( 0, 0, 0 );
 			camera.up.set( -1, 0, 0 ); // In our data, z is up
+			// camera.rotation.set( 0, 0, 0 );
+			//camera.lookAt(155, 271, 147)
 			scene.add( camera );
 
 			// Create controls
 			controls = new OrbitControls( camera, renderer.domElement );
 			controls.addEventListener( 'change', render );
 			controls.target.set(155, 271, 147 );
+			controls.quaternion = (0,0,0, 0);
 			controls.minZoom = 0.1;
 			controls.maxZoom = 4;
+
+			var gridXZ = new THREE.GridHelper(100, 10);
+		    scene.add(gridXZ);
 			
 
 			// Create clickable cube
@@ -333,7 +339,8 @@
 
 		function render() {
 
-			//console.log(camera.position)
+			console.log(camera)
+			console.log(controls)
 
 			if (is_animating == true) {
 				animation_id = requestAnimationFrame( render );
