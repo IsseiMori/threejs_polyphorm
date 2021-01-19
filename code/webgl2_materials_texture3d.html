@@ -52,6 +52,8 @@
 		let image_id = 0;
 		let image_objects = [];
 
+        const scene_origin = new THREE.Vector3(155, 271, 147);
+
 		init();
 
 		function init() {
@@ -74,21 +76,28 @@
 			const aspect = window.innerWidth / window.innerHeight;
 			camera = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 1000 );
 			// camera.position.set( 0, 0, 0 );
+            camera.position.set( scene_origin.x, scene_origin.y, scene_origin.z + 200 );
+            camera.fov = 45;
 			camera.up.set( -1, 0, 0 ); // In our data, z is up
 			// camera.rotation.set( 0, 0, 0 );
 			//camera.lookAt(155, 271, 147)
+            //camera.lookAt(155, 271, 147)
 			scene.add( camera );
 
 			// Create controls
 			controls = new OrbitControls( camera, renderer.domElement );
 			controls.addEventListener( 'change', render );
-			controls.target.set(155, 271, 147 );
+			controls.target.set(scene_origin.x, scene_origin.y, scene_origin.z);
+            // controls.target.set(0, 0, -147 );
 			controls.quaternion = (0,0,0, 0);
 			controls.minZoom = 0.1;
 			controls.maxZoom = 4;
 
 			var gridXZ = new THREE.GridHelper(100, 10);
 		    scene.add(gridXZ);
+
+            const axesHelper = new THREE.AxesHelper( 100 );
+            scene.add( axesHelper );
 			
 
 			// Create clickable cube
@@ -102,7 +111,7 @@
 
 			// Create clickable cube
 			cube2 = new THREE.Mesh(                                          
-				new THREE.CubeGeometry(20,20,20).translate(150,500,300),                          
+				new THREE.CubeGeometry(20,20,20).translate(150,500,400),                          
 				new THREE.MeshBasicMaterial({                                      
 				       color: 0x999900 //球の色
 				}));
@@ -284,7 +293,7 @@
 			is_animating = true
 			controls.enabled = false;
 			controls.removeEventListener( 'change', render );
-		    tweenObjectVec3(camera.position, [131,295,490], 2000);
+		    tweenObjectVec3(camera.position, [scene_origin.x, scene_origin.y, scene_origin.z + 500], 2000);
 		    //tweenObjectVec3(camera.position, [135.5,525.7,327.5], 2000);
 		    tweenObject(camera, 1.5, 2000);
 		    image_id = 0;
@@ -296,7 +305,12 @@
 			is_animating = true
 			controls.enabled = false;
 			controls.removeEventListener( 'change', render );
-		    tweenObjectVec3(camera.position, [209,453,434], 2000);
+            scene_origin.x, scene_origin.y, scene_origin.z
+            // renderer -0.143968 2.733552 2.916671
+            // old 209,453,434
+            // org 155, 271, 147
+            // x bottom, y right, z front
+		    tweenObjectVec3(camera.position, [scene_origin.x + 270, scene_origin.y - 14, scene_origin.z + 29], 2000);
 		    //tweenObjectVec3(camera.position, [135.5,525.7,327.5], 2000);
 		    tweenObject(camera, 1.5, 2000);
 		    image_id = 1;
@@ -339,8 +353,8 @@
 
 		function render() {
 
-			console.log(camera)
-			console.log(controls)
+			console.log(camera.position)
+			// console.log(controls)
 
 			if (is_animating == true) {
 				animation_id = requestAnimationFrame( render );
