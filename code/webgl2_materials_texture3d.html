@@ -31,6 +31,31 @@
 
 		}
 
+		let views_filename = ["textures/ortho/frame0.png",
+							  "textures/ortho/frame1.png",
+							  "textures/ortho/frame2.png",
+							  "textures/ortho/frame3.png",
+							  "textures/ortho/frame4.png"];
+
+		let views_position = [[5.000000, 0.000000, -0.000000],
+							  [0.753011, 4.922502, 0.449392],
+							  [3.183978, -3.595320, 1.391385],
+							  [-4.951712, -0.166402, -0.672952],
+							  [-0.758826, 0.463579, 4.920292]];
+
+		let eyes_position = [];
+		// Renderer coordinate to threejs coordinate
+		for (var i = 0; i < views_position.length; i++) {
+			eyes_position[i] = views_position[i].slice();
+			eyes_position[i][0] = views_position[i][2] * 100;
+			eyes_position[i][1] = -views_position[i][1] * 100;
+			eyes_position[i][2] = views_position[i][0] * 100;
+		}
+
+		let eyes = [];
+
+		
+
 		let renderer,
 			scene,
 			camera,
@@ -41,7 +66,6 @@
 			cube,
 			cube2,
 			raycaster,
-			mouse,
 			animation_id;
 			//camera_HUD,
 			//scene_HUD;
@@ -51,8 +75,10 @@
 		let image_on = false;
 		let image_id = 0;
 		let image_objects = [];
+		let mouse = new THREE.Vector2(0,0);
 
-        const scene_origin = new THREE.Vector3(155, 271, 147);
+        // const scene_origin = new THREE.Vector3(155, 271, 147);
+        const scene_origin = new THREE.Vector3(304, 540, 300);
 
 		init();
 
@@ -72,16 +98,17 @@
 			document.body.appendChild( renderer.domElement );
 
 			// Create camera (The volume renderer does not work very well with perspective yet)
-			const h = 512; // frustum height
+			const h = 1024; // frustum height
 			const aspect = window.innerWidth / window.innerHeight;
-			camera = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 1000 );
+			camera = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 0, 8000 );
+			// camera = new THREE.PerspectiveCamera( 45,  aspect, 0.01, 8000 );
 			// camera.position.set( 0, 0, 0 );
-            camera.position.set( scene_origin.x, scene_origin.y, scene_origin.z + 200 );
-            camera.fov = 45;
+			// x bottom, y right, z front
+            camera.position.set( scene_origin.x, scene_origin.y, scene_origin.z + 700 );
+            const render_cam_pos = [0.427154, 4.966463, 0.389604];
+            //const render_cam_pos = [0.128835, -4.993277, 0.224924];
+            //camera.position.set( scene_origin.x + render_cam_pos[2]*100, scene_origin.y - render_cam_pos[1]*100, scene_origin.z + render_cam_pos[0]*100 );
 			camera.up.set( -1, 0, 0 ); // In our data, z is up
-			// camera.rotation.set( 0, 0, 0 );
-			//camera.lookAt(155, 271, 147)
-            //camera.lookAt(155, 271, 147)
 			scene.add( camera );
 
 			// Create controls
@@ -92,41 +119,36 @@
 			controls.quaternion = (0,0,0, 0);
 			controls.minZoom = 0.1;
 			controls.maxZoom = 4;
+			//controls.minDistance = 0.1;
+			//controls.maxDistance = 1000;
 
 			var gridXZ = new THREE.GridHelper(100, 10);
 		    scene.add(gridXZ);
 
             const axesHelper = new THREE.AxesHelper( 100 );
             scene.add( axesHelper );
-			
+		
 
-			// Create clickable cube
-			cube = new THREE.Mesh(                                          
-				new THREE.CubeGeometry(20,20,20).translate(150,300,300),                          
-				new THREE.MeshBasicMaterial({                                      
-				       color: 0x990000 //球の色
-				}));
-			scene.add(cube);
-			cube.callback = objectClickHandler;
+			for (let i = 0; i < 5; i++) {
+				new THREE.TextureLoader().load( "textures/eye.png", function(map) {
+					var map_material = new THREE.MeshBasicMaterial( { map: map, color: 0xffffff} );
+					var geometry = new THREE.PlaneGeometry(50, 50);
+					var mesh = new THREE.Mesh(geometry, map_material);
+					mesh.position.set(scene_origin.x + eyes_position[i][0] * 0.5, 
+									  scene_origin.y + eyes_position[i][1] * 0.5, 
+									  scene_origin.z + eyes_position[i][2] * 0.5);
+					mesh.callback = objectClickHandler;
+					scene.add( mesh );
+					eyes.push( mesh )
+				});
+			}
 
-			// Create clickable cube
-			cube2 = new THREE.Mesh(                                          
-				new THREE.CubeGeometry(20,20,20).translate(150,500,400),                          
-				new THREE.MeshBasicMaterial({                                      
-				       color: 0x999900 //球の色
-				}));
-			scene.add(cube2);
-			cube2.callback = objectClickHandler2;
-
-			//camera_HUD = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 1000 );
-			//renderer.autoClear = false; // to allow overlay
-
-			new THREE.TextureLoader().load( "textures/frame0.png", function(map) {
+			new THREE.TextureLoader().load( "textures/real/right_ortho.png", function(map) {
 				var map_material = new THREE.SpriteMaterial( { map: map, color: 0xffffff} );
 				map_material.transparent = true;
 				//map_material.opacity = 0.5;
 				var sprite = new THREE.Sprite( map_material );
-				const slime_image_width = 650;
+				const slime_image_width = map.image.width * 0.9;
 				const slime_image_height = slime_image_width / map.image.width * map.image.height;
 				sprite.scale.set(slime_image_width, slime_image_height,1);
 				sprite.position.z = -10;
@@ -153,7 +175,6 @@
 
 
 			raycaster = new THREE.Raycaster();
-		    mouse = new THREE.Vector2();
 
 		    controls.update();
 
@@ -163,7 +184,7 @@
 			// let dirLight = new DirectionalLight( 0xffffff );
 
 			// The gui for interaction
-			volconfig = { clim1: 0, clim2: 0.25, renderstyle: 'mip', isothreshold: 0.15, colormap: 'gray' };
+			volconfig = { clim1: 0.12, clim2: 1, renderstyle: 'mip', isothreshold: 0.15, colormap: 'gray' };
 			const gui = new GUI();
 			gui.add( volconfig, 'clim1', 0, 1, 0.01 ).onChange( updateUniforms );
 			gui.add( volconfig, 'clim2', 0, 1, 0.01 ).onChange( updateUniforms );
@@ -172,7 +193,7 @@
 			gui.add( volconfig, 'isothreshold', 0, 1, 0.01 ).onChange( updateUniforms );
 
 			// Load the data ...
-			new NRRDLoader().load( "models/nrrd/trace2_itk.nrrd", function ( volume ) {
+			new NRRDLoader().load( "models/nrrd/trace_real2.nrrd", function ( volume ) {
 
 				// Texture to hold the volume. We have scalars, so we put our data in the red channel.
 				// THREEJS will select R32F (33326) based on the THREE.RedFormat and THREE.FloatType.
@@ -213,6 +234,9 @@
 				const geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength);
 				// geometry.translate( volume.xLength / 2 - 0.5, volume.yLength / 2 - 0.5, volume.zLength / 2 - 0.5 );
 				geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2);
+				console.log(volume.xLength / 2)
+				console.log(volume.yLength / 2)
+				console.log(volume.zLength / 2)
 				// geometry.rotateY( 90 );
 				const mesh = new THREE.Mesh( geometry, material );
 
@@ -289,13 +313,15 @@
 	        .start();
 	    }
 
-		function objectClickHandler() {
+		function objectClickHandler(eye_index) {
 			is_animating = true
 			controls.enabled = false;
 			controls.removeEventListener( 'change', render );
-		    tweenObjectVec3(camera.position, [scene_origin.x, scene_origin.y, scene_origin.z + 500], 2000);
+		    tweenObjectVec3(camera.position, [scene_origin.x + eyes_position[1][0] , 
+											  scene_origin.y + eyes_position[1][1], 
+											  scene_origin.z + eyes_position[1][2]], 2000);
 		    //tweenObjectVec3(camera.position, [135.5,525.7,327.5], 2000);
-		    tweenObject(camera, 1.5, 2000);
+		    //tweenObject(camera, 1.5, 2000);
 		    image_id = 0;
 		    render();
 		}
@@ -310,9 +336,11 @@
             // old 209,453,434
             // org 155, 271, 147
             // x bottom, y right, z front
-		    tweenObjectVec3(camera.position, [scene_origin.x + 270, scene_origin.y - 14, scene_origin.z + 29], 2000);
+		    tweenObjectVec3(camera.position, [scene_origin.x + eyes_position[2][0] , 
+											  scene_origin.y + eyes_position[2][1], 
+											  scene_origin.z + eyes_position[2][2]], 2000);
 		    //tweenObjectVec3(camera.position, [135.5,525.7,327.5], 2000);
-		    tweenObject(camera, 1.5, 2000);
+		    //tweenObject(camera, 1.5, 2000);
 		    image_id = 1;
 		    render();
 		}
@@ -325,9 +353,7 @@
 	 
 	        raycaster.setFromCamera(mouse, camera);
 	 
-	        let meshObjects = [cube, cube2]; // three.js objects with click handlers we are interested in
-	 
-	        var intersects = raycaster.intersectObjects(meshObjects);
+	        var intersects = raycaster.intersectObjects(eyes);
 
 	 
 	        if (intersects.length != 0) {
@@ -353,8 +379,9 @@
 
 		function render() {
 
-			console.log(camera.position)
-			// console.log(controls)
+			//console.log(controls)
+			//console.log(camera.zoom)
+
 
 			if (is_animating == true) {
 				animation_id = requestAnimationFrame( render );
