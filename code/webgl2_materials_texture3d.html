@@ -11,9 +11,11 @@
 </head>
 
 <body>
-	<div id="info">
+	<!--<div id="info">
 		<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - Float volume render test (mip / isosurface)
-	</div>
+	</div>-->
+	<button style="top:0" id="Render" class="ui">Fire</button>
+	<button style="bottom:0" id="spell" class="ui">Spell</button>
 	<div id="inset"></div>
 
 	<script type="module">
@@ -31,17 +33,52 @@
 
 		}
 
-		let views_filename = ["textures/ortho/frame0.png",
-							  "textures/ortho/frame1.png",
-							  "textures/ortho/frame2.png",
-							  "textures/ortho/frame3.png",
-							  "textures/ortho/frame4.png"];
+		let views_filename = ["textures/final/frame0.png",
+							  "textures/final/frame1.png",
+							  "textures/final/frame2.png",
+							  "textures/final/frame3.png",
+							  "textures/final/frame4.png",
+							  "textures/final/frame5.png",
+							  "textures/final/frame6.png",
+							  "textures/final/frame7.png",
+							  "textures/final/frame8.png",
+							  "textures/final/frame9.png",
+							  "textures/final/frame10.png",
+							  "textures/final/frame11.png",
+							  "textures/final/frame12.png",
+							  "textures/final/frame13.png",
+							  "textures/final/frame14.png",
+							  "textures/final/frame16.png",
+							  "textures/final/frame17.png",
+							  "textures/final/frame18.png",
+							  "textures/final/frame19.png",
+							  "textures/final/frame20.png",
+							  "textures/final/frame21.png",
+							  "textures/final/frame22.png",
+							  "textures/final/frame23.png",
+							  "textures/final/frame24.png",
+							  "textures/final/frame25.png",
+							  "textures/final/frame26.png",
+							  "textures/final/frame27.png",
+							  "textures/final/frame28.png",
+							  "textures/final/frame29.png"];
 
-		let views_position = [[5.000000, 0.000000, -0.000000],
-							  [0.753011, 4.922502, 0.449392],
-							  [3.183978, -3.595320, 1.391385],
-							  [-4.951712, -0.166402, -0.672952],
-							  [-0.758826, 0.463579, 4.920292]];
+		let views_position = [[-4.800569, 2.304703, -3.550055],
+							  [5.139204, -0.030836, 1.657600],
+							  [0.069951, -0.005890, 5.399544],
+							  [0.381469, 5.379249, 0.279575],
+							  [-4.696600, -0.067670, -0.165423],
+							  [-1.878225, 4.226243, 2.377213],
+							  [-1.878225, 4.226243, 2.377213],
+							  [0.557344, 2.415185, 1.302401],
+							  [-0.823530, 2.261668, 0.983189],
+							  [-0.823530, 2.261668, 0.983189],
+							  [1.399279, 0.040329, -0.019885],
+							  [0.142560, 1.756476, -0.412998],
+							  [5.119167, 0.931533, 1.782238],
+							  [2.228966, 5.131253, 2.896887],
+							  [0.338188, 2.456764, 0.316142]];
+
 
 		let eyes_position = [];
 		// Renderer coordinate to threejs coordinate
@@ -77,7 +114,7 @@
 		let image_objects = [];
 		let mouse = new THREE.Vector2(0,0);
 
-        // const scene_origin = new THREE.Vector3(155, 271, 147);
+        // const scene_origin = new THREE.Vector3(155, 271, 147); // light mesh
         const scene_origin = new THREE.Vector3(304, 540, 300);
 
 		init();
@@ -122,54 +159,28 @@
 			//controls.minDistance = 0.1;
 			//controls.maxDistance = 1000;
 
-			var gridXZ = new THREE.GridHelper(100, 10);
-		    scene.add(gridXZ);
+			// var gridXZ = new THREE.GridHelper(100, 10);
+			// scene.add(gridXZ);
 
-            const axesHelper = new THREE.AxesHelper( 100 );
-            scene.add( axesHelper );
+			// const axesHelper = new THREE.AxesHelper( 100 );
+			// scene.add( axesHelper );
 		
 
-			for (let i = 0; i < 5; i++) {
-				new THREE.TextureLoader().load( "textures/eye.png", function(map) {
-					var map_material = new THREE.MeshBasicMaterial( { map: map, color: 0xffffff} );
-					var geometry = new THREE.PlaneGeometry(50, 50);
-					var mesh = new THREE.Mesh(geometry, map_material);
-					mesh.position.set(scene_origin.x + eyes_position[i][0] * 0.5, 
-									  scene_origin.y + eyes_position[i][1] * 0.5, 
-									  scene_origin.z + eyes_position[i][2] * 0.5);
-					mesh.callback = objectClickHandler;
-					scene.add( mesh );
-					eyes.push( mesh )
-				});
+			for (var i = 0; i < views_filename.length; i++) {
+				new THREE.TextureLoader().load(views_filename[i], function(map) {
+					var map_material = new THREE.SpriteMaterial( { map: map, color: 0xffffff} );
+					map_material.transparent = true;
+					//map_material.opacity = 0.5;
+					var sprite = new THREE.Sprite( map_material );
+					const slime_image_width = 900;
+					const slime_image_height = slime_image_width / map.image.width * map.image.height;
+					sprite.scale.set(slime_image_width, slime_image_height,1);
+					sprite.position.z = -10;
+		        	sprite.renderOrder = 9999;
+					//camera.add( sprite );
+					image_objects.push(sprite);
+				} );
 			}
-
-			new THREE.TextureLoader().load( "textures/real/right_ortho.png", function(map) {
-				var map_material = new THREE.SpriteMaterial( { map: map, color: 0xffffff} );
-				map_material.transparent = true;
-				//map_material.opacity = 0.5;
-				var sprite = new THREE.Sprite( map_material );
-				const slime_image_width = map.image.width * 0.9;
-				const slime_image_height = slime_image_width / map.image.width * map.image.height;
-				sprite.scale.set(slime_image_width, slime_image_height,1);
-				sprite.position.z = -10;
-	        	sprite.renderOrder = 9999;
-				//camera.add( sprite );
-				image_objects.push(sprite);
-			} );
-
-			new THREE.TextureLoader().load( "textures/frame1.png", function(map) {
-				var map_material = new THREE.SpriteMaterial( { map: map, color: 0xffffff} );
-				map_material.transparent = true;
-				//map_material.opacity = 0.5;
-				var sprite = new THREE.Sprite( map_material );
-				const slime_image_width = 650;
-				const slime_image_height = slime_image_width / map.image.width * map.image.height;
-				sprite.scale.set(slime_image_width, slime_image_height,1);
-				sprite.position.z = -10;
-	        	sprite.renderOrder = 9999;
-				//camera.add( sprite );
-				image_objects.push(sprite);
-			} );
 			
 
 
@@ -184,13 +195,14 @@
 			// let dirLight = new DirectionalLight( 0xffffff );
 
 			// The gui for interaction
-			volconfig = { clim1: 0.12, clim2: 1, renderstyle: 'mip', isothreshold: 0.15, colormap: 'gray' };
+			volconfig = { clim1: 0.12, clim2: 1, renderstyle: 'mip', isothreshold: 0.15, colormap: 'gray', render:snapAndRender};
 			const gui = new GUI();
 			gui.add( volconfig, 'clim1', 0, 1, 0.01 ).onChange( updateUniforms );
 			gui.add( volconfig, 'clim2', 0, 1, 0.01 ).onChange( updateUniforms );
 			gui.add( volconfig, 'colormap', { gray: 'gray', viridis: 'viridis' } ).onChange( updateUniforms );
 			gui.add( volconfig, 'renderstyle', { mip: 'mip', iso: 'iso' } ).onChange( updateUniforms );
 			gui.add( volconfig, 'isothreshold', 0, 1, 0.01 ).onChange( updateUniforms );
+			gui.add(volconfig, 'render').name("Render");
 
 			// Load the data ...
 			new NRRDLoader().load( "models/nrrd/trace_real2.nrrd", function ( volume ) {
@@ -255,6 +267,7 @@
 
 		}
 
+
 		function updateUniforms() {
 
 			material.uniforms[ "u_clim" ].value.set( volconfig.clim1, volconfig.clim2 );
@@ -297,7 +310,6 @@
                 })
 	        .onComplete(handleComplete)
 	        .start();
-	        console.log("aaa");
 	    }
 
 	    function tweenObject(object, val1, duration) {        
@@ -344,6 +356,54 @@
 		    image_id = 1;
 		    render();
 		}
+
+		function snapAndRender() {
+			// console.log(camera.position);
+			var camera_position = camera.position;
+			var camera_x = camera_position.x = scene_origin.x;
+			var camera_y = camera_position.y - scene_origin.y;
+			var camera_z = camera_position.z - scene_origin.z;
+
+			var camera_vec = new THREE.Vector3(camera_x, camera_y, camera_z);
+			camera_vec.normalize();
+			// console.log(camera_vec);
+
+
+			var min_index = 0
+			var min_dot = Infinity;
+			for (var i = 0; i < eyes_position.length; i++) {
+				var eye_x = eyes_position[i][0];
+				var eye_y = eyes_position[i][1];
+				var eye_z = eyes_position[i][2];
+				var eye_vec = new THREE.Vector3(eye_x, eye_y, eye_z);
+				eye_vec.normalize();
+
+				var d = camera_vec.dot(eye_vec);
+
+				if (d < min_dot) {
+					min_dot = d;
+					min_index = i;
+				}
+
+			}
+
+			console.log(min_index);
+			console.log(camera_vec);
+			console.log(eyes_position[min_index]);
+
+			is_animating = true
+			controls.enabled = false;
+			controls.removeEventListener( 'change', render );
+		    tweenObjectVec3(camera.position, [scene_origin.x + eyes_position[min_index][0], 
+											  scene_origin.y + eyes_position[min_index][1], 
+											  scene_origin.z + eyes_position[min_index][2]], 2000);
+		    //tweenObjectVec3(camera.position, [135.5,525.7,327.5], 2000);
+		    //tweenObject(camera, 1.5, 2000);
+		    image_id = min_index*2;
+		    render();
+
+			
+		}
 		
 		function onClick(event) {
 	        event.preventDefault();
@@ -371,16 +431,15 @@
 			is_animating = false
 			controls.enabled = true;
 			controls.addEventListener( 'change', render );
-			if (image_id == 0) 
-				camera.add(image_objects[0]);
-			else camera.add(image_objects[1]);
+			console.log("showing" + image_id);
+			camera.add(image_objects[image_id]);
 			image_on = true;
 	    }
 
 		function render() {
 
 			//console.log(controls)
-			//console.log(camera.zoom)
+			// console.log(camera.zoom)
 
 
 			if (is_animating == true) {
