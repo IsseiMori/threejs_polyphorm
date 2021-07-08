@@ -1,0 +1,819 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Physarum Telam</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="../main.css">
+	<link type="text/css" rel="stylesheet" href="../custom.css">
+	<link rel="icon" href="../textures/favicon-16x16.png">
+	<!-- smooth animation package -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/16.3.5/Tween.min.js"></script>
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-195356273-1"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'UA-195356273-1');
+	</script>
+</head>
+
+<body>
+	<div id="inset"></div>
+
+		<!-- The Modal -->
+	<div id="myModal" class="modal">
+	  <!-- Modal content -->
+	  <div class="modal-content">
+	    <span class="close">&times;</span>
+	    <div class="modal-popuptext">
+	            <h2>Welcome to Physarum Telam...</h2>
+	            <p>Physarum Telam combines nature-inspired computation, physically based light transport, and interactive rendering to fuel a dialogue about data visualization. Through it we probe the relationship between scientific data and the computational methods used to show and interpret it.</br></br>
+				Physarum Telam uses an interactive 3D visualization of cosmological data as a canvas, inserting into it a number of portals that reveal an alternative view of the data: as a translucent yellow blob mimicking the appearance of Physarum polycephalum. The aesthetic of this ancient organism – which itself served as a template for the algorithmic model of the data – dramatically changes the perception of the visualization from generic to strangely alien, without modifying the data at all.
+				Given that visual style impacts our reading of computer-visualized data to such an extent, how many decisions are impacted by arbitrary aesthetic choices? Can we hope to someday create canonical formalisms that rid us of these ambiguities?</p>
+				<h3>Instructions</h3>
+				<p>Click and drag to rotate camera.</br>
+				Scroll mouse wheel to zoom in and out.</br>
+				Click on yellow spheres to display the rendered images from each viewpoint.
+				</p>
+				</div>
+         	</div>
+	  </div>
+	</div>
+
+	<section id="loading-screen" style="background-image: url('../textures/jpg/frame19.jpg'); background-size: 100% 100%;">
+
+		<!--<div id="overlay">
+         <div id="popup">
+         	<div class="popuptext">
+	            <h2>Welcome to Physarum Telam...</h2>
+	            <p>Physarum Telam combines nature-inspired computation, physically based light transport, and interactive rendering to fuel a dialogue about data visualization. Through it we probe the relationship between scientific data and the computational methods used to show and interpret it.</br></br>
+				Physarum Telam uses an interactive 3D visualization of cosmological data as a canvas, inserting into it a number of portals that reveal an alternative view of the data: as a translucent yellow blob mimicking the appearance of Physarum polycephalum. The aesthetic of this ancient organism – which itself served as a template for the algorithmic model of the data – dramatically changes the perception of the visualization from generic to strangely alien, without modifying the data at all.
+				Given that visual style impacts our reading of computer-visualized data to such an extent, how many decisions are impacted by arbitrary aesthetic choices? Can we hope to someday create canonical formalisms that rid us of these ambiguities?</p>
+				<h3>Instructions</h3>
+				<p>Click and drag to rorate camera.</br>
+				Scroll mouse wheel to zoom in and out.</br>
+				Click on yellow spheres to display the rendered images from each viewpoint.</p>
+				</div>
+         	</div>
+      	</div>-->
+	<div id="loader"></div>
+
+	
+
+	</section>
+
+	<script type="module">
+		import * as THREE from '../build/three.module.js';
+
+		import { GUI } from '../jsm/libs/dat.gui.module.js';
+		import { OrbitControls } from '../jsm/controls/OrbitControls.js';
+		import { NRRDLoader } from '../jsm/loaders/NRRDLoader.js';
+		import { VolumeRenderShader } from '../jsm/shaders/VolumeShader.js';
+		import { WEBGL } from '../jsm/WebGL.js';
+
+		if ( WEBGL.isWebGL2Available() === false ) {
+
+			document.body.appendChild( WEBGL.getWebGL2ErrorMessage() );
+
+		}
+
+
+		// Each array has 2 images (front or back light) or 4 images (front or back light X 2 focal length)
+		let views_filenames = [["../textures/jpg/frame0.jpg", "../textures/jpg/frame1.jpg"],
+							  ["../textures/jpg/frame2.jpg", "../textures/jpg/frame3.jpg"],
+							  ["../textures/jpg/frame4.jpg", "../textures/jpg/frame5.jpg"],
+							  ["../textures/jpg/frame6.jpg", "../textures/jpg/frame7.jpg"],
+							  ["../textures/jpg/frame8.jpg", "../textures/jpg/frame9.jpg"],
+							  ["../textures/jpg/frame10.jpg","../textures/jpg/frame11.jpg", 
+							   "../textures/jpg/frame12.jpg", "../textures/jpg/frame13.jpg"],
+							  ["../textures/jpg/frame14.jpg", "../textures/jpg/frame15.jpg"],
+							  ["../textures/jpg/frame16.jpg", "../textures/jpg/frame17.jpg", 
+							   "../textures/jpg/frame18.jpg", "../textures/jpg/frame19.jpg"],
+							  ["../textures/jpg/frame20.jpg", "../textures/jpg/frame21.jpg"],
+							  ["../textures/jpg/frame22.jpg", "../textures/jpg/frame23.jpg"],
+							  ["../textures/jpg/frame24.jpg", "../textures/jpg/frame25.jpg"],
+							  ["../textures/jpg/frame26.jpg", "../textures/jpg/frame27.jpg"],
+							  ["../textures/jpg/frame28.jpg", "../textures/jpg/frame29.jpg"]];
+
+
+		let views_position = [[-4.800569, 2.304703, -3.550055],
+							  [5.139204, -0.030836, 1.657600],
+							  [0.069951, -0.005890, 5.399544],
+							  [0.381469, 5.379249, 0.279575],
+							  [-4.696600, -0.067670, -0.165423],
+							  [-1.878225, 4.226243, 2.377213],
+							  [0.557344, 2.415185, 1.302401],
+							  [-0.823530, 2.261668, 0.983189],
+							  [1.399279, 0.040329, -0.019885],
+							  [0.142560, 1.756476, -0.412998],
+							  [5.119167, 0.931533, 1.782238],
+							  [2.228966, 5.131253, 2.896887],
+							  [0.338188, 2.456764, 0.316142]];
+
+		let views_closeup_list = [7, 8, 9, 10, 11, 14];
+
+
+		let eyes_position = [];
+		// Renderer coordinate to threejs coordinate
+		for (var i = 0; i < views_position.length; i++) {
+			eyes_position[i] = views_position[i].slice();
+			eyes_position[i][0] = -views_position[i][2] * 100;
+			eyes_position[i][1] = views_position[i][1] * 100;
+			eyes_position[i][2] = views_position[i][0] * 100;
+		}
+
+		let eyes = [];
+
+		let current_cube = null;
+
+
+		let renderer,
+			scene,
+			camera,
+			controls,
+			material,
+			cmtextures,
+			cube,
+			cube2,
+			raycaster,
+			animation_id,
+			click_text_mesh,
+			sprite_black,
+			next_view = 0;
+			//camera_HUD,
+			//scene_HUD;
+
+		let is_animating = false;
+		let val_zoom = 1;
+		let image_on = false;
+		let image_id = 0;
+		let image_objects = [];
+		let image_nums = [];
+		let mouse = new THREE.Vector2(0,0);
+		let zoom_default = 1.25;
+		let light_front = true; 
+		let focus_near = true;
+		let in_transition = false;
+		let img_zoom_ratio = 1;
+
+
+		// GUIs
+		var volconfig;
+		var gui = new GUI({ width: 300 });
+		var gui_component_focus = null;
+		var gui_component_light = null;
+		var gui_component_opacity = null;
+
+		// Pop-up description
+		var modal = document.getElementById( 'myModal' );
+		var span = document.getElementsByClassName("close")[0];
+
+
+        // const scene_origin = new THREE.Vector3(155, 271, 147); // light mesh
+        const scene_origin = new THREE.Vector3(304, 540, 300);
+
+		init();
+
+		function init() {
+
+			const loadingManager = new THREE.LoadingManager( () => {
+			
+				const loadingScreen = document.getElementById( 'loading-screen' );
+				loadingScreen.classList.add( 'fade-out' );
+				
+				// optional: remove loader from DOM via event listener
+				loadingScreen.addEventListener( 'transitionend', onTransitionEnd );
+				
+			} );
+
+			scene = new THREE.Scene();
+			//scene_HUD = new THREE.Scene();
+
+			// background color
+			// scene.background = new THREE.Color( 0x440054 );
+			scene.background = new THREE.Color( 0x000000 );
+
+			// Create renderer
+			renderer = new THREE.WebGLRenderer();
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+
+			// Create camera (The volume renderer does not work very well with perspective yet)
+			const h = 1024; // frustum height
+			const aspect = window.innerWidth / window.innerHeight;
+			camera = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 0, 8000 );
+			// x bottom, y right, z front
+			// arbitary value to avoid camera clipping
+            camera.position.set( scene_origin.x, scene_origin.y, scene_origin.z + 2000 ); 
+            const render_cam_pos = [0.427154, 4.966463, 0.389604];
+            //const render_cam_pos = [0.128835, -4.993277, 0.224924];
+            //camera.position.set( scene_origin.x + render_cam_pos[2]*100, scene_origin.y - render_cam_pos[1]*100, scene_origin.z + render_cam_pos[0]*100 );
+			camera.up.set( -1, 0, 0 ); // In our data, z is up
+			camera.zoom = zoom_default;
+			camera.updateProjectionMatrix();
+			scene.add( camera );
+
+			// Create controls
+			controls = new OrbitControls( camera, renderer.domElement );
+			controls.addEventListener( 'change', render );
+			controls.target.set(scene_origin.x, scene_origin.y, scene_origin.z);
+            // controls.target.set(0, 0, -147 );
+			controls.quaternion = (0,0,0, 0);
+			controls.minZoom = 0.1;
+			controls.maxZoom = 4;
+			
+			if ((window.innerWidth / window.innerHeight) >= (1920.0 / 1080.0))
+				img_zoom_ratio = (window.innerWidth / window.innerHeight) / (1920.0 / 1080.0);
+			else 
+				img_zoom_ratio = (window.innerHeight / window.innerWidth) / (1080.0 / 1920.0);
+
+			for (var i = 0; i < eyes_position.length; i++) {
+				(function(){
+					var ii = i;
+
+					let dist = Math.sqrt(eyes_position[ii][0] * eyes_position[ii][0] + 
+										 eyes_position[ii][1] * eyes_position[ii][1] + 
+										 eyes_position[ii][2] * eyes_position[ii][2]);
+
+					let radius = 1000;
+					img_zoom_ratio = 1;
+					if (views_closeup_list.includes(ii)) {
+						radius = 700;
+					}
+
+
+					var cube = new THREE.Mesh(                                          
+					new THREE.SphereGeometry(10,32,32).translate(scene_origin.x + eyes_position[ii][0] / dist * radius,
+															   scene_origin.y + eyes_position[ii][1] / dist * radius,
+															   scene_origin.z + eyes_position[ii][2] / dist * radius),
+					new THREE.MeshBasicMaterial({color: 0xFFFF00}));
+					cube.userData.i = ii;
+					cube.userData.eye_position = eyes_position[ii];
+
+					cube.userData.num_images = 0; 
+
+					for (let i_img = 0; i_img < views_filenames[ii].length; i_img++) {
+						createSprite(views_filenames[ii][i_img], cube, eyes_position[ii], i_img, ii);
+						cube.userData.num_images += 1;
+					}
+
+
+					scene.add(cube);
+					eyes.push(cube);
+
+				})();
+			}
+
+
+			raycaster = new THREE.Raycaster();
+
+		    controls.update();
+
+		    sprite_black = new THREE.Sprite( new THREE.SpriteMaterial( { color: 0x000000} ) );
+			sprite_black.scale.set(6000, 6000,1);
+			sprite_black.position.z = -9;
+	       	sprite_black.renderOrder = 9999;
+	       	sprite_black.visible = false;
+	  		scene.add(sprite_black);
+
+			// scene.add( new AxesHelper( 128 ) );
+
+			// Lighting is baked into the shader a.t.m.
+			// let dirLight = new DirectionalLight( 0xffffff );
+
+			// The gui for interaction
+			volconfig = { clim1: 0.12, clim2: 1, renderstyle: 'mip', isothreshold: 0.15, colormap: 'gray', opacity: 1, showDescription: ShowDescription, switch_light: SwitchLightDir, switch_focus: SwitchFocus, nextView: NextView};
+			gui.add( volconfig, 'showDescription').name("Physarum Telam?");
+			gui.add( volconfig, 'nextView').name("Go to next view");
+			gui.__closeButton.hidden = true;
+
+			// Load the data ...
+			const NRRD_Loader = new NRRDLoader(loadingManager);
+			NRRD_Loader.load( "../models/nrrd/trace_real.nrrd", function ( volume ) {
+
+				const texture = new THREE.DataTexture3D( volume.data, volume.xLength, volume.yLength, volume.zLength );
+				texture.format = THREE.RedFormat;
+				texture.type = THREE.UnsignedByteType;
+				texture.minFilter = texture.magFilter = THREE.LinearFilter;
+				texture.unpackAlignment = 1;
+
+				// Colormap textures
+				cmtextures = {
+					viridis: new THREE.TextureLoader().load( '../textures/cm_viridis.png', render ),
+					gray: new THREE.TextureLoader().load( '../textures/cm_gray.png', render )
+				};
+
+				// Material
+				const shader = VolumeRenderShader;
+
+				const uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+				uniforms[ "u_data" ].value = texture;
+				uniforms[ "u_size" ].value.set( volume.xLength, volume.yLength, volume.zLength );
+				uniforms[ "u_clim" ].value.set( volconfig.clim1, volconfig.clim2 );
+				uniforms[ "u_renderstyle" ].value = volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
+				uniforms[ "u_renderthreshold" ].value = volconfig.isothreshold; // For ISO renderstyle
+				uniforms[ "u_cmdata" ].value = cmtextures[ volconfig.colormap ];
+
+				material = new THREE.ShaderMaterial( {
+					uniforms: uniforms,
+					vertexShader: shader.vertexShader,
+					fragmentShader: shader.fragmentShader,
+					side: THREE.BackSide, // The volume shader uses the backface as its "reference point"
+					alphaTest: 1,
+					transparent: true,
+					opacity: 0.5,
+					depthWrite: false,
+					depthTest: true
+				} );
+
+				const color = 0xFFFFFF;
+			    const intensity = 1;
+	   				 const light = new THREE.DirectionalLight(color, intensity);
+	   				 light.position.set(-1, 2, 4);
+	   				 scene.add(light);
+
+				// THREE.Mesh
+				const geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength);
+				// geometry.translate( volume.xLength / 2 - 0.5, volume.yLength / 2 - 0.5, volume.zLength / 2 - 0.5 );
+				geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2);
+				// geometry.rotateY( 90 );
+				const mesh = new THREE.Mesh( geometry, material );
+				//mesh.scale.set(2,2,2)
+
+				scene.add( mesh );
+
+				var loader = new THREE.FontLoader();
+
+				loader.load( '../fonts/helvetiker_regular.typeface.json', function ( font ) {
+
+				    var textGeo = new THREE.TextGeometry( "Click this !", {
+				        font: font,
+				        size: 20,
+				        height: 10,
+				        curveSegments: 12,
+				        bevelEnabled: false
+
+				    } );
+
+					var textMaterial = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } );
+
+					click_text_mesh = new THREE.Mesh( textGeo, textMaterial );
+					// mesh.position.set( scene_origin.x + eyes_position[9],
+					// 				   scene_origin.y + eyes_position[9], 
+					// 				   scene_origin.z + eyes_position[9] );
+					console.log(eyes)
+					click_text_mesh.position.set(  scene_origin.x + eyes[11].userData.eye_position[0] - 35,
+										scene_origin.y + eyes[11].userData.eye_position[1] - 580,
+										scene_origin.z + eyes[11].userData.eye_position[2] );
+					// mesh.position.set(41, 500, 14);
+					click_text_mesh.rotateZ(Math.PI/2);
+					//mesh.lookAt(camera);
+
+					scene.add( click_text_mesh );
+
+					render();
+
+				} );
+
+			} );
+
+			window.addEventListener( 'resize', onWindowResize, false );
+			window.addEventListener( 'mousemove', onMouseMove, false );
+			renderer.domElement.addEventListener("click", onClick, true);
+			renderer.domElement.addEventListener("pointerdown", onDocumentMouseMove, true);
+			renderer.domElement.addEventListener("wheel", onDocumentMouseMove, true);
+
+
+
+			/* Pop-up control */
+			// When the user clicks on <span> (x), close the modal
+			span.onclick = function() {
+			  modal.style.display = "none";
+			}
+
+			// When the user clicks anywhere outside of the modal, close it
+			window.onclick = function(event) {
+			  if (event.target == modal) {
+			    modal.style.display = "none";
+			  }
+			}
+
+		}
+
+
+		function updateUniforms() {
+
+			material.uniforms[ "u_clim" ].value.set( volconfig.clim1, volconfig.clim2 );
+			material.uniforms[ "u_renderstyle" ].value = volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
+			material.uniforms[ "u_renderthreshold" ].value = volconfig.isothreshold; // For ISO renderstyle
+			material.uniforms[ "u_cmdata" ].value = cmtextures[ volconfig.colormap ];
+
+			render();
+
+		}
+
+		function onWindowResize() {
+
+			renderer.setSize( window.innerWidth, window.innerHeight );
+
+			const aspect = window.innerWidth / window.innerHeight;
+
+			const frustumHeight = camera.top - camera.bottom;
+
+			camera.left = - frustumHeight * aspect / 2;
+			camera.right = frustumHeight * aspect / 2;
+
+			camera.updateProjectionMatrix();
+
+			if ((window.innerWidth / window.innerHeight) >= (1920.0 / 1080.0))
+				img_zoom_ratio = (window.innerWidth / window.innerHeight) / (1920.0 / 1080.0);
+			else 
+				img_zoom_ratio = (window.innerHeight / window.innerWidth) / (1080.0 / 1920.0);
+
+			const slime_image_width = 1920 * 0.78 * img_zoom_ratio;
+			const slime_image_height = slime_image_width / 1920 * 1080;
+			for (let i = 0; i < eyes.length; i++) {
+				if (views_closeup_list.includes(i) && i != 11) {
+					let zoomx = eyes[i].userData.zoomx;
+					if (eyes[i].userData.sprite0) eyes[i].userData.sprite0.scale.set(slime_image_width/zoomx, slime_image_height/zoomx,1/zoomx);
+					if (eyes[i].userData.sprite1) eyes[i].userData.sprite1.scale.set(slime_image_width/zoomx, slime_image_height/zoomx,1/zoomx);
+					if (eyes[i].userData.sprite2) eyes[i].userData.sprite2.scale.set(slime_image_width/zoomx, slime_image_height/zoomx,1/zoomx);
+					if (eyes[i].userData.sprite3) eyes[i].userData.sprite3.scale.set(slime_image_width/zoomx, slime_image_height/zoomx,1/zoomx);
+				}
+	        }
+
+			render();
+
+		}
+
+		function createSprite(filename, cube, eye_pos, option, num) {
+
+			let loader = new THREE.TextureLoader();
+			loader.load(filename, function(map) {
+				var map_material = new THREE.SpriteMaterial( { map: map, color: 0xffffff} );
+				map_material.transparent = true;
+				map_material.opacity = 1;
+				var sprite = new THREE.Sprite( map_material );
+				var slime_image_width = 1920 * 0.78;
+				if (views_closeup_list.includes(num) && num != 11) slime_image_width = 1920 * 0.78 * img_zoom_ratio;
+				const slime_image_height = slime_image_width / map.image.width * map.image.height;
+				sprite.scale.set(slime_image_width, slime_image_height,1);
+				sprite.position.z = -10;
+		       	sprite.renderOrder = 9999;
+
+
+		       	let camera_dist = Math.sqrt(eye_pos[0] * eye_pos[0] + 
+    										eye_pos[1] * eye_pos[1] + 
+    										eye_pos[2] * eye_pos[2]);
+			   	let zoomx = 550/camera_dist;
+
+			   	cube.userData.zoomx = zoomx;
+
+			   	sprite.scale.set(slime_image_width/zoomx, slime_image_height/zoomx,1/zoomx);
+
+				if (option == 0) cube.userData.sprite0 = sprite;
+				if (option == 1) cube.userData.sprite1 = sprite;
+				if (option == 2) cube.userData.sprite2 = sprite;
+				if (option == 3) cube.userData.sprite3 = sprite;
+
+			} );
+		}
+
+		function tweenObjectVec3(object, vec3, duration) {        
+	        new TWEEN.Tween(object).to({
+	          x: vec3[0],
+	          y: vec3[1],
+	          z: vec3[2]
+	        }, duration)
+	        .easing(TWEEN.Easing.Quadratic.InOut)
+	        .onUpdate(function(){
+                    controls.update();
+                })
+	        .onComplete(handleComplete)
+	        .start();
+	    }
+
+	    function tweenObject(object, val1, duration) {        
+	        new TWEEN.Tween(object).to({
+	          zoom: val1
+	      	}, duration)
+	        .easing(TWEEN.Easing.Quadratic.InOut)
+	        .onUpdate(function(){
+                    camera.updateProjectionMatrix();
+                })
+	        .start();
+	    }
+
+	    function tweenObject_opacity(object, val1, duration) {        
+	        new TWEEN.Tween(object).to({
+	          opacity: val1
+	      	}, duration)
+	        .easing(TWEEN.Easing.Quadratic.InOut)
+	        .onUpdate(function(){
+                    object.opacity = 1;
+                })
+	        .onComplete(handleComplete)
+	        .start();
+	    }
+
+	    let was_mouse_on_eye = false;
+	    function onMouseMove(event) {
+	    	//console.log("moving");
+
+	    	if (in_transition) return null;
+
+	    	if (was_mouse_on_eye) {
+	    		for (let i = 0; i < eyes.length; i++) {
+		        	eyes[i].material.color = new THREE.Color(0xFFFF00);
+		        }
+		        was_mouse_on_eye = false;
+		        render();
+	    	}
+
+	    	event.preventDefault();
+	 
+	        mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+	        mouse.y =  - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+	 
+	        raycaster.setFromCamera(mouse, camera);
+	 
+	        var intersects = raycaster.intersectObjects(eyes);
+
+	        if (intersects.length != 0) {
+
+	            var eye = intersects[0].object;
+	            eye.material.color = new THREE.Color(0xFFA500);
+	            was_mouse_on_eye = true;
+	            render();
+	            eye.material.color = new THREE.Color(0xFFFF00);
+
+	         }
+	    }
+		
+		function onClick(event) {
+
+			if (image_on) camera.clear();
+
+	        event.preventDefault();
+	 
+	        mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+	        mouse.y =  - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+	 
+	        raycaster.setFromCamera(mouse, camera);
+	 
+	        var intersects = raycaster.intersectObjects(eyes);
+
+	 
+	        if (intersects.length != 0) {
+	        	if (in_transition) return null;
+				else in_transition = true;
+
+	            var eye_pos = intersects[0].object.userData.eye_position;
+	            var i = intersects[0].object.userData.i;
+
+	            is_animating = true;
+				controls.enabled = false;
+				controls.removeEventListener( 'change', render );
+
+				let camera_dist = Math.sqrt(eye_pos[0] * eye_pos[0] + 
+			    							eye_pos[1] * eye_pos[1] + 
+			    							eye_pos[2] * eye_pos[2]);
+
+
+
+			    tweenObjectVec3(camera.position, [scene_origin.x + eye_pos[0] / camera_dist * 2000, 
+												  scene_origin.y + eye_pos[1] / camera_dist * 2000, 
+												  scene_origin.z + eye_pos[2] / camera_dist * 2000], 1500);
+			    
+			    // console.log(camera_dist); // 550 smaller->closer
+			   	let zoomx = 550/camera_dist;
+
+			    tweenObject(camera, zoom_default*zoomx, 1500);
+			    image_id = i*2;
+			    current_cube = intersects[0].object;
+
+			    render();
+
+	        }
+	 
+	    }
+
+	    function onDocumentMouseMove(event) {
+
+	    	if (in_transition) return null;
+
+	    	click_text_mesh.visible = false;
+
+	    	sprite_black.visible = false;
+
+	        if (image_on) {
+	        	camera.clear();
+	        	image_on = false;
+
+		        // bring back anchors
+		        for (let i = 0; i < eyes.length; i++) {
+		        	eyes[i].visible = true;
+		        }
+
+		        if (gui_component_focus != null) {
+		        	gui.remove(gui_component_focus);
+		        	gui_component_focus = null;
+		        }
+
+		        if (gui_component_light != null) {
+		        	gui.remove(gui_component_light);
+		        	gui_component_light = null;
+		        }
+
+		        // if (gui_component_opacity != null) {
+		        // 	gui.remove(gui_component_opacity);
+		        // 	gui_component_opacity = null;
+		        // }
+
+		        // gui.hide();
+		        render();
+	    	}
+	    }
+
+	    // callback function for tween animation
+	    function handleComplete() {
+
+	    	// gui.show();
+
+	    	if (gui_component_light == null)
+	    		gui_component_light = gui.add( volconfig, 'switch_light').name("Switch Light Direction");
+
+	    	// Remove change focus option if not applicable
+	    	if (gui_component_focus != null) gui.remove(gui_component_focus);
+
+	    	if (current_cube.userData.num_images > 2)
+	    		gui_component_focus = gui.add( volconfig, 'switch_focus').name("Switch Focal Point");
+	    	else gui_component_focus = null;
+
+	    	// if (gui_component_opacity == null)
+	    	// 	gui_component_opacity = gui.add( volconfig, 'opacity', 0, 1, 0.01 ).onChange( updateOpacity ).name("Opacity");
+
+			camera.add(current_cube.userData.sprite0);
+
+			// new TWEEN.Tween( current_cube.userData.sprite.material ).to( { opacity: 1 }, 1000 ).start();
+			//tweenObject_opacity(current_cube.userData.sprite.material, 1.0, 1000);
+			current_cube.userData.sprite0.material.opacity = 0;
+			new TWEEN.Tween(current_cube.userData.sprite0.material).to({
+	          opacity: 1.0
+	      	}, 500)
+	      	.onComplete(handleCompleteOpacity)
+	        .start();
+
+	        // hide anchors
+	        for (let i = 0; i < eyes.length; i++) {
+	        	eyes[i].visible = false;
+	        }
+
+	        sprite_black.visible = true;
+			
+			image_on = true;
+	    }
+
+	    function handleCompleteOpacity() {
+	    	is_animating = false;
+			controls.enabled = true;
+			controls.addEventListener( 'change', render );
+
+			in_transition = false;
+	    }
+
+	    function updateOpacity() {
+	    	current_cube.userData.sprite0.material.opacity = volconfig.opacity;
+
+	    	current_cube.userData.sprite0.material.opacity = volconfig.opacity;
+			current_cube.userData.sprite1.material.opacity = volconfig.opacity;
+	    	if (current_cube.userData.num_images > 2) {
+	    		current_cube.userData.sprite2.material.opacity = volconfig.opacity;
+				current_cube.userData.sprite3.material.opacity = volconfig.opacity;
+	    	}
+
+	    	render();
+	    }
+
+	    // Stop loading screen
+	    function onTransitionEnd( event ) {
+			event.target.remove();
+			image_on = false;	
+		}
+
+		function SwitchLightDir() {
+
+			if (image_on)  {
+				camera.clear();
+
+				// switch light direction variable
+				light_front = !light_front;
+
+				if ( current_cube.userData.sprite2 == null ) focus_near = true;
+
+				if (light_front && focus_near) camera.add(current_cube.userData.sprite0);
+				if (!light_front && focus_near) camera.add(current_cube.userData.sprite1);
+				if (light_front && !focus_near) camera.add(current_cube.userData.sprite2);
+				if (!light_front && !focus_near) camera.add(current_cube.userData.sprite3);
+
+				render();
+			}
+		}
+
+		function ShowDescription() {
+			if (modal.style.display == "block") {
+				modal.style.display = "none";
+			}
+			else modal.style.display = "block";
+		}
+
+		function SwitchFocus() {
+
+			if (image_on)  {
+				camera.clear();
+
+				// switch light direction variable
+				focus_near = !focus_near;
+
+				if ( current_cube.userData.sprite2 == null ) focus_near = true;
+
+				if (light_front && focus_near) camera.add(current_cube.userData.sprite0);
+				if (!light_front && focus_near) camera.add(current_cube.userData.sprite1);
+				if (light_front && !focus_near) camera.add(current_cube.userData.sprite2);
+				if (!light_front && !focus_near) camera.add(current_cube.userData.sprite3);
+
+				render();
+			}
+		}
+
+		function NextView() {
+
+			onDocumentMouseMove(null);
+
+			if ( next_view == eyes.length ) next_view = 0;
+			var intersects = eyes[next_view++];
+	 
+        	if (in_transition) return null;
+			else in_transition = true;
+
+            var eye_pos = intersects.userData.eye_position;
+            var i = intersects.userData.i;
+            console.log(i);
+
+            is_animating = true;
+			controls.enabled = false;
+			controls.removeEventListener( 'change', render );
+
+			let camera_dist = Math.sqrt(eye_pos[0] * eye_pos[0] + 
+		    							eye_pos[1] * eye_pos[1] + 
+		    							eye_pos[2] * eye_pos[2]);
+
+
+
+		    tweenObjectVec3(camera.position, [scene_origin.x + eye_pos[0] / camera_dist * 2000, 
+											  scene_origin.y + eye_pos[1] / camera_dist * 2000, 
+											  scene_origin.z + eye_pos[2] / camera_dist * 2000], 1500);
+		    
+		    // console.log(camera_dist); // 550 smaller->closer
+		   	let zoomx = 550/camera_dist;
+
+		    tweenObject(camera, zoom_default*zoomx, 1500);
+		    image_id = i*2;
+		    current_cube = intersects;
+
+		    render();
+
+		}
+
+
+		function render() {
+
+			// animation_id = requestAnimationFrame( render );
+			// controls.update();
+
+
+			if (is_animating == true) {
+				animation_id = requestAnimationFrame( render );
+				controls.update();
+			}
+			else {
+				cancelAnimationFrame( animation_id );
+			}
+
+			//controls.update();
+
+			TWEEN.update();
+			renderer.render( scene, camera );
+
+		}
+		
+
+	</script>
+
+</body>
+</html>

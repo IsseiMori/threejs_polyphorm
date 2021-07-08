@@ -3,7 +3,7 @@ import {
 	Loader,
 	Matrix4,
 	Vector3
-} from '../../../build/three.module.js';
+} from '../../build/three.module.js';
 import { Zlib } from '../libs/gunzip.module.min.js';
 import { Volume } from '../misc/Volume.js';
 
@@ -320,7 +320,7 @@ NRRDLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 		parseHeader( _header );
 
 		var _data = _bytes.subarray( _data_start ); // the data without header
-		if ( headerObject.encoding === 'gzip' || headerObject.encoding === 'gz' ) {
+		if ( headerObject.encoding === 'gzip' || headerObject.encoding === 'gz' || headerObject.encoding === 'gzi') {
 
 			// we need to decompress the datastream
 			// here we start the unzipping and get a typed Uint8Array back

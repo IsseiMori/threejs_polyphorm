@@ -1,7 +1,7 @@
 import {
 	Vector2,
 	Vector3
-} from '../../../build/three.module.js';
+} from '../../build/three.module.js';
 
 /**
  * Shaders to render 3D volumes using raycasting.
@@ -9,7 +9,7 @@ import {
  * This is not the only approach, therefore it's marked 1.
  */
 
-var VolumeRenderShader1 = {
+var VolumeRenderShader = {
 	uniforms: {
 		'u_size': { value: new Vector3( 1, 1, 1 ) },
 		'u_renderstyle': { value: 0 },
@@ -173,6 +173,7 @@ var VolumeRenderShader1 = {
 
 		// Resolve final color
 		'				gl_FragColor = apply_colormap(max_val);',
+		'				if (gl_FragColor.r < 0.1) gl_FragColor.a = 0.2;',
 		'		}',
 
 
@@ -277,9 +278,10 @@ var VolumeRenderShader1 = {
 		'				vec4 color = apply_colormap(val);',
 		'				final_color = color * (ambient_color + diffuse_color) + specular_color;',
 		'				final_color.a = color.a;',
-		'				return final_color;',
+		//'				return final_color;',
+		'				return vec4(1.0, 1.0, 1.0, 0.0);',
 		'		}',
 	].join( '\n' )
 };
 
-export { VolumeRenderShader1 };
+export { VolumeRenderShader };
