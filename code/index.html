@@ -328,6 +328,11 @@
 					vertexShader: shader.vertexShader,
 					fragmentShader: shader.fragmentShader,
 					side: THREE.BackSide, // The volume shader uses the backface as its "reference point"
+					alphaTest: 1,
+					transparent: true,
+					opacity: 0.5,
+					depthWrite: false,
+					depthTest: true
 				} );
 
 				const color = 0xFFFFFF;
